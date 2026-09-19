@@ -1,3 +1,33 @@
+/* ============================================================
+   BULK DELETE ALL TWEETS & REPLIES — archive-based (recommended)
+   ============================================================
+   WHY ARCHIVE MODE: X's live timeline-fetch endpoints
+   (UserTweetsAndReplies / UserTweets) use versioned query IDs +
+   feature-flag blobs that X rotates often, and they've already
+   broken once in this session. Archive mode skips that fetch
+   entirely and only relies on the DeleteTweet endpoint, which is
+   far more stable. This is why from_archive defaults to true below.
+
+   SETUP (do this first):
+   1. X -> Settings -> Your Account -> Download an archive of your
+      data. Wait for the email (can take hours).
+   2. Unzip it, locate data/tweets.js (sometimes tweet.js).
+   3. Post one throwaway test tweet, delete it manually via the
+      normal UI, and in DevTools Network tab (filter: DeleteTweet)
+      copy its x-client-transaction-id into delete_tid below, and
+      confirm the query ID in the request URL still matches the
+      one hardcoded in delete_tweets() further down. Update if not.
+   4. Fill in authorization, client_tid, username below.
+      csrf_token and user_id are read automatically from cookies.
+   5. Paste this whole script into console (type "allow pasting"
+      first if prompted), then drag tweets.js into the box that
+      pops up and click Confirm.
+
+   THIS IS IRREVERSIBLE. Test with a couple of IDs via
+   delete_specific_ids_only first if you want to sanity-check
+   before running it against your whole history.
+   ============================================================ */
+
 var authorization = "Bearer ***"; // replace with your Authorization header value
 var ua = navigator.userAgentData.brands.map(brand => `"${brand.brand}";v="${brand.version}"`).join(', ');
 var client_tid = "***"; // replace with a fresh X-Client-Transaction-Id (from any graphql request)
@@ -301,9 +331,10 @@ function findTweetIds(obj) {
 async function delete_tweets(id_list) {
 	// Replace with a FRESH x-client-transaction-id captured from a manual
 	// DeleteTweet request (see setup step 3 at the top of this file).
-	var delete_tid = "" //REPLACE_WITH_FRESH_TRANSACTION_ID
+	var delete_tid = ""  //REPLACE_WITH_FRESH_TRANSACTION_ID
 	var id_list_size = id_list.length
 	var retry = 0
+	var max_retries = 3
 
 	for (let i = 0; i < id_list_size; ++i) {
 		const response = await fetch("https://x.com/i/api/graphql/VaenaVgh5q5ih7kvyVjgtg/DeleteTweet", {
@@ -333,17 +364,31 @@ async function delete_tweets(id_list) {
 			"credentials": "include"
 		});
 		if (!response.ok) {
+			if (response.status === 401) {
+				// 401 = bad/expired auth headers, not a transient issue — retrying
+				// with the same headers will just 401 again, so fail fast instead
+				// of looping. Fix authorization / csrf_token / delete_tid and rerun.
+				retry += 1;
+				console.log(`(delete_tweets) 401 Unauthorized on tweet ${id_list[i]} — attempt ${retry}/${max_retries}`);
+				if (retry >= max_retries) {
+					throw new Error(`Stopped after ${max_retries} consecutive 401s. Check that authorization, csrf_token, and delete_tid are current and correctly formatted (no duplicated "Bearer").`)
+				}
+				await sleep(2000);
+				i -= 1;
+				continue
+			}
 			if (response.status === 429) {
 				console.log("Rate limit reached. Waiting 1 minute")
 				await sleep(1000 * 60);
 				i -= 1;
 				continue
 			}
-			if (retry == 8) {
-				throw new Error("Max retries reached")
+			retry += 1;
+			if (retry >= max_retries) {
+				throw new Error(`Stopped after ${max_retries} consecutive failures on tweet ${id_list[i]} (status ${response.status}).`)
 			}
 			console.log(response.text())
-			console.log(`(delete_tweets) Network response was not ok, retrying in ${10 * (1 + retry)} seconds`);
+			console.log(`(delete_tweets) Network response was not ok, retrying in ${10 * (1 + retry)} seconds (attempt ${retry}/${max_retries})`);
 			i -= 1;
 			await sleep(10000 * (1 + retry));
 			continue
