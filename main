@@ -8,7 +8,7 @@ var random_resource_old_tweets = "H8OOoI-5ZE4NxgRr8lfyWg"; // only used if from_
 var language_code = navigator.language.split("-")[0]
 var tweets_to_delete = []
 var user_id = getCookie("twid").substring(4);
-var username = "YourUsernameHere"; // replace with your X username
+var username = "***"; // replace with your X username
 var stop_signal = undefined
 var twitter_archive_content = undefined
 var twitter_archive_loading_confirmed = false
@@ -19,7 +19,7 @@ var delete_options = {
 	"from_archive": true,
 
 	/* unretweet: set true if you also want to undo retweets (works in archive mode too) */
-	"unretweet": false,
+	"unretweet": true,
 
 	/* do_not_remove_pinned_tweet: safety net, but not 100% guaranteed — also add your
 	   pinned tweet's ID to tweets_to_ignore below to be sure */
@@ -301,13 +301,13 @@ function findTweetIds(obj) {
 async function delete_tweets(id_list) {
 	// Replace with a FRESH x-client-transaction-id captured from a manual
 	// DeleteTweet request (see setup step 3 at the top of this file).
-	var delete_tid = ""  //REPLACE_WITH_FRESH_TRANSACTION_ID
+	var delete_tid = "" // replace with a fresh X-Client-Transaction-Id
 	var id_list_size = id_list.length
 	var retry = 0
 	var max_retries = 3
 
 	for (let i = 0; i < id_list_size; ++i) {
-		const response = await fetch("https://x.com/i/api/graphql/VaenaVgh5q5ih7kvyVjgtg/DeleteTweet", {
+		const response = await fetch("https://x.com/i/api/graphql/nxpZCY2K-I6QoFHAHeojFQ/DeleteTweet", {
 			"headers": {
 				"accept": "*/*",
 				"accept-language": buildAcceptLanguageString(),
@@ -328,7 +328,7 @@ async function delete_tweets(id_list) {
 			},
 			"referrer": `https://x.com/${username}/with_replies`,
 			"referrerPolicy": "strict-origin-when-cross-origin",
-			"body": `{\"variables\":{\"tweet_id\":\"${id_list[i]}\",\"dark_request\":false},\"queryId\":\"VaenaVgh5q5ih7kvyVjgtg\"}`,
+			"body": `{\"variables\":{\"tweet_id\":\"${id_list[i]}\",\"dark_request\":false},\"queryId\":\"nxpZCY2K-I6QoFHAHeojFQ\"}`,
 			"method": "POST",
 			"mode": "cors",
 			"credentials": "include"
