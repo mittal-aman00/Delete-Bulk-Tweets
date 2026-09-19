@@ -1,10 +1,14 @@
-BULK DELETE ALL TWEETS & REPLIES — archive-based
+Tweet Cremator 🔥
 
-WHY ARCHIVE MODE: X's live timeline-fetch endpoints (UserTweetsAndReplies / UserTweets) use versioned query IDs + feature-flag blobs that X rotates often, and they've already 
-broken once in this session. Archive mode skips that fetch entirely and only relies on the DeleteTweet endpoint, which is far more stable. This is why from_archive defaults to true below.
+A script that reads your embarrassing tweet history from your X archive and yeets it into the void, one `DeleteTweet` API call at a time. Because apparently you said a lot of things.
 
-SETUP (do this first):
+## How it works
+1. You give it your login token and CSRF cookie (basically your house keys).
+2. It reads `tweets.js` from your data archive so it doesn't have to beg X's flaky internal API for a list.
+3. It deletes everything that matches your filters, politely waiting out rate limits like a well-behaved stalker.
+4. If X says "401 Unauthorized" three times in a row, it gives up instead of screaming into the void forever — you're welcome.
 
+## Setup
    1. X -> Settings -> Your Account -> Download an archive of your
       data. Wait for the email (can take hours).
    2. Unzip it, locate data/tweets.js (sometimes tweet.js).
@@ -19,4 +23,10 @@ SETUP (do this first):
       first if prompted), then drag tweets.js into the box that
       pops up and click Confirm.
 
-THIS IS IRREVERSIBLE. Test with a couple of IDs via delete_specific_ids_only first if you want to sanity-check before running it against your whole history.
+## Warnings
+- **Permanent.** No undo button. No regrets… well, fewer regrets.
+- **Not an official API.** X can and will break this out of spite.
+- **Your bearer token = your password.** Don't paste it in Discord. Or here, ideally, but too late now.
+- **Might annoy X's automation police.** Use responsibly-ish.
+
+Enjoy your clean slate. Or don't — you did this to yourself.
