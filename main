@@ -301,7 +301,7 @@ function findTweetIds(obj) {
 async function delete_tweets(id_list) {
 	// Replace with a FRESH x-client-transaction-id captured from a manual
 	// DeleteTweet request (see setup step 3 at the top of this file).
-	var delete_tid = "REPLACE_WITH_FRESH_TRANSACTION_ID"
+	var delete_tid = "" //REPLACE_WITH_FRESH_TRANSACTION_ID
 	var id_list_size = id_list.length
 	var retry = 0
 
